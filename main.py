@@ -1,5 +1,6 @@
 import random
 import time
+import math as mt
 
 global choice
 # encrypt or decrypt options
@@ -19,14 +20,15 @@ global file_input
 global random_num1
 global random_num2
 global product
+global cipher_text
 
 # selected numbers must be large
-random_num1 = random.randint(100, 1000)
-random_num2 = random.randint(100, 1000)
+random_num1 = random.randint(1, 100)
+random_num2 = random.randint(1, 100)
 
 
 # e - public exponent
-public_exponent = 65537
+public_exponent = 7
 
 # make sure selected numbers are prime
 def check_prime(random_number) -> bool:
@@ -51,47 +53,53 @@ def check_difference(num1, num2) -> bool:
 # RSA encryption
 def rsa_encrypt():
     if (check_prime(random_num1) and check_prime(random_num2)):
-        if (check_difference(random_num1, random_num2)):
-            # carry on with next step of RSA encryption
-            print("Both numbers are prime. Carry on")
-            time.sleep(2)
+        # carry on with next step of RSA encryption
+        print("Both numbers are prime. Carry on")
+        time.sleep(2)
+        
+        # calculate the product of the two numbers
+        product = random_num1 * random_num2
+        print(f"The product of the two numbers is: {product}")
+        
+        public_key = (product, public_exponent)
+        print(f"Your public key is: {public_key}")
+        
+        # encrypt the file using the generated RSA keys
+        enter_public_key = input("Now, enter your public key to encrypt the file: ")
+        
+        # cipher text is m^public_exponent mod product. The m indicates the plaintext message from the file.
+        # get plaintext message from file
+        with open (file_input) as secret_file:
+            plain_text = secret_file.read()
             
-            # calculate the product of the two numbers
-            product = random_num1 * random_num2
-            print(f"The product of the two numbers is: {product}")
+            # convert string to int
+            plain_text_int = int(plain_text)
             
-            public_key = (product, public_exponent)
-            print(f"Your public key is: {public_key}")
+        cipher_text = (mt.pow(plain_text_int, public_exponent)) % product 
+        
+        # whitespace for readability in terminal
+        print("")
+        
+        print("Congratulations, you have ciphered the text file. \n This is what the cipher text looks like: \n")
+        
+        # whitespace for readability in terminal
+        print("")
+        
+        print(f"Ciphered text: {cipher_text}")
+        
+        
+        print(f"These are the files that have been ciphered: {choice} \n Do you want to decrypt it?")
+        
+        # get input
+        ch = input("Yes to decrypt, No to stop program.\n lowercase only please. ")
+        
+        time.sleep(2)
+        if ch == 'yes':
+            rsa_decrypt()
+        
+        print("Decrypting... ")
+        time.sleep(2)
             
-            # encrypt the file using the generated RSA keys
-            enter_public_key = input("Now, enter your public key to encrypt the file: ")
-            
-            # cipher text is m^public_exponent mod product. The m indicates the plaintext message from the file.
-            # get plaintext message from file
-            with open (file_input) as secret_file:
-                plain_text = secret_file.read()
-                
-                # convert string to int
-                plain_text_int = int(plain_text)
-                
-            cipher_text = (plain_text_int ^ public_exponent) % product 
-            
-            # whitespace for readability in terminal
-            print("")
-            
-            print("Congratulations, you have ciphered the text file. \n This is what the cipher text looks like: \n")
-            
-            # whitespace for readability in terminal
-            print("")
-            
-            print(f"Ciphered text: {cipher_text}")
-            
-            
-            print(f"These are the files that have been ciphered: {choice} \n Do you want to decrypt it?")
-            
-            
-        else:
-            print("The two numbers have an insubstantial difference.")
     else:
         print("The two numbers are not prime.")
 
@@ -103,8 +111,26 @@ def rsa_decrypt():
     the recipient uses their private key (n, d) to compute 
     the plaintext message, where the plaintext message = c^d mod n.
     '''
+    # with open (file_input) as secret_file:
+    #     cipher_text = secret_file.read()
     
-    private_key = 
+    #     # convert string to int
+    #     plain_text_int = int(plain_text)
+    
+    phi_n = (random_num1 - 1) * (random_num2 - 1)
+    d = (mt.pow(public_exponent, -1)) % phi_n
+    
+    decrypted_text = (mt.pow(cipher_text, d)) % product 
+    
+    private_key = (product, d)
+    
+    print("Congratulations, you have deciphered the text file. \n This is what the deciphered text looks like: \n")
+            
+    # whitespace for readability in terminal
+    print("")
+    
+    print(f"Deciphered text: {decrypted_text}")
+                
 
 # prompt the user to select a .txt file to encrypt
 
@@ -133,10 +159,11 @@ elif choice == "decrypt":
     
     with open (file_input) as secret_file:
         text = secret_file.read()
+        rsa_decrypt()
         
-        if (is_ciphered(secret_file)):
-            # code block SHOULD run if file is encrypted
-            rsa_decrypt()
+        # if (is_ciphered(secret_file)):
+        #     # code block SHOULD run if file is encrypted
+        
 else:
     print("Invalid option. Please select either 'encrypt' or 'decrypt'.")
 
